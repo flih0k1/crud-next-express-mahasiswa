@@ -9,6 +9,8 @@ export default function HomePage() {
           Aplikasi ini adalah contoh frontend Next.js yang mengakses backend
           Express.js melalui REST API.
         </p>
+        <p>Nama  : Rafli Sujatmiko </p>
+        <p> NIM   : 0102523051  </p>
 
         <Link href="/mahasiswa">
           <button className="btn-primary">Buka Data Mahasiswa</button>
