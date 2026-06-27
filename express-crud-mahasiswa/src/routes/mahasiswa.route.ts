@@ -1,97 +1,26 @@
-import { Router, Request, Response } from "express";
-import { mahasiswa, Mahasiswa } from "../data/mahasiswa.data";
+import { Router } from "express";
+import { 
+  getAllMahasiswa, 
+  createMahasiswa, 
+  updateMahasiswa, 
+  deleteMahasiswa 
+} from "../controllers/mahasiswa.controller";
+import { authMiddleware } from "../middlewares/auth.middleware";
+import { allowRoles } from "../middlewares/role.middleware";
+import { uploadFotoMahasiswa } from "../middlewares/upload.middleware";
 
 const router = Router();
 
-// 1. READ ALL (GET /api/mahasiswa)
-router.get("/", (req: Request, res: Response) => {
-  res.json({
-    message: "Data mahasiswa berhasil diambil",
-    data: mahasiswa,
-  });
-});
+// 1. READ ALL WITH JOIN, SEARCH, FILTER, PAGINATION (Bisa diakses Admin, Operator, Viewer)
+router.get("/", authMiddleware, allowRoles("admin", "operator", "viewer"), getAllMahasiswa);
 
-// 2. READ DETAIL (GET /api/mahasiswa/:id)
-router.get("/:id", (req: Request, res: Response) => {
-  const id = Number(req.params.id);
-  const data = mahasiswa.find((item) => item.id === id);
+// 2. CREATE MAHASISWA WITH FOTO UPLOAD (Hanya Admin & Operator)
+router.post("/", authMiddleware, allowRoles("admin", "operator"), uploadFotoMahasiswa.single("foto"), createMahasiswa);
 
-  if (!data) {
-    return res.status(404).json({ message: "Mahasiswa tidak ditemukan" });
-  }
+// 3. UPDATE MAHASISWA WITH FOTO UPLOAD (Hanya Admin & Operator)
+router.put("/:id", authMiddleware, allowRoles("admin", "operator"), uploadFotoMahasiswa.single("foto"), updateMahasiswa);
 
-  res.json({
-    message: "Detail mahasiswa berhasil diambil",
-    data,
-  });
-});
-
-// 3. CREATE (POST /api/mahasiswa)
-router.post("/", (req: Request, res: Response) => {
-  const { nim, nama, prodi, angkatan } = req.body;
-
-  if (!nim || !nama || !prodi || !angkatan) {
-    return res.status(400).json({
-      message: "NIM, nama, prodi, dan angkatan wajib diisi",
-    });
-  }
-
-  const newMahasiswa: Mahasiswa = {
-    id: mahasiswa.length + 1,
-    nim,
-    nama,
-    prodi,
-    angkatan: Number(angkatan),
-  };
-
-  mahasiswa.push(newMahasiswa);
-
-  res.status(201).json({
-    message: "Mahasiswa berhasil ditambahkan",
-    data: newMahasiswa,
-  });
-});
-
-// 4. UPDATE (PUT /api/mahasiswa/:id)
-router.put("/:id", (req: Request, res: Response) => {
-  const id = Number(req.params.id);
-  const { nim, nama, prodi, angkatan } = req.body;
-
-  const index = mahasiswa.findIndex((item) => item.id === id);
-
-  if (index === -1) {
-    return res.status(404).json({ message: "Mahasiswa tidak ditemukan" });
-  }
-
-  mahasiswa[index] = {
-    id,
-    nim,
-    nama,
-    prodi,
-    angkatan: Number(angkatan),
-  };
-
-  res.json({
-    message: "Mahasiswa berhasil diperbarui",
-    data: mahasiswa[index],
-  });
-});
-
-// 5. DELETE (DELETE /api/mahasiswa/:id)
-router.delete("/:id", (req: Request, res: Response) => {
-  const id = Number(req.params.id);
-  const index = mahasiswa.findIndex((item) => item.id === id);
-
-  if (index === -1) {
-    return res.status(404).json({ message: "Mahasiswa tidak ditemukan" });
-  }
-
-  const deletedData = mahasiswa.splice(index, 1);
-
-  res.json({
-    message: "Mahasiswa berhasil dihapus",
-    data: deletedData[0],
-  });
-});
+// 4. DELETE MAHASISWA FROM DATABASE (Hanya Admin yang Berhak)
+router.delete("/:id", authMiddleware, allowRoles("admin"), deleteMahasiswa);
 
 export default router;

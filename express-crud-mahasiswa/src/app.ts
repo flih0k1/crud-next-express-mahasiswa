@@ -1,35 +1,28 @@
 import express from "express";
 import cors from "cors";
+import path from "path";
 import mahasiswaRoutes from "./routes/mahasiswa.route";
-import mahasiswaDbRoutes from "./routes/mahasiswa-db.route";
+import prodiRoutes from "./routes/prodi.route";
+import authRoutes from "./routes/auth.route";
+import userRoutes from "./routes/user.route";
 
 const app = express();
 
-// 1. UPDATE DI SINI: Mengatur CORS agar mengizinkan Frontend Next.js di port 3001
-app.use(
-  cors({
-    origin: "http://localhost:3001", // Mengizinkan alamat frontend kamu
-    methods: ["GET", "POST", "PUT", "DELETE"], // Method yang diperbolehkan
-    allowedHeaders: ["Content-Type"],
-  })
-);
+app.use(cors({
+  origin: "http://localhost:3001",
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+}));
 
-app.use(express.json()); // Agar Express dapat membaca body JSON 
+app.use(express.json());
 
-// === PASANG MIDDLEWARE LOGGER DI SINI (Sub-bab 3.8) ===
-app.use((req, res, next) => {
-  console.log(`${req.method} ${req.url}`);
-  next(); // Wajib dipanggil agar request tidak menggantung!
-});
+// Expose folder uploads agar foto mahasiswa bisa dipanggil via URL browser
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
-app.get("/", (req, res) => {
-  res.json({ message: "Backend Express berjalan" });
-});
-
-// Daftarkan route dengan prefix path /api/mahasiswa 
+// Daftarkan API Endpoint
+app.use("/api/auth", authRoutes);
+app.use("/api/prodi", prodiRoutes);
 app.use("/api/mahasiswa", mahasiswaRoutes);
-
-// Route versi Database 
-app.use("/api/db/mahasiswa", mahasiswaDbRoutes);
+app.use("/api/users", userRoutes);
 
 export default app;
